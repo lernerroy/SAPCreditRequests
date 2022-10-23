@@ -1,0 +1,1224 @@
+class ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT definition
+  public
+  inheriting from ZCL_ZGW_CNS_CREDIT_REQ_DPC
+  create public .
+
+public section.
+protected section.
+
+  methods PARSE_CONDITION
+    importing
+      !IV_FILTER_STRING type STRING
+    returning
+      value(RT_FILTERS) type /IWBEP/T_MGW_SELECT_OPTION .
+
+  methods ACCSET_GET_ENTITY
+    redefinition .
+  methods ACCSET_GET_ENTITYSET
+    redefinition .
+  methods ARRIVALMETHODSET_GET_ENTITY
+    redefinition .
+  methods ARRIVALMETHODSET_GET_ENTITYSET
+    redefinition .
+  methods ASSETSET_GET_ENTITY
+    redefinition .
+  methods COSTCENTERSET_GET_ENTITY
+    redefinition .
+  methods COSTCENTERSET_GET_ENTITYSET
+    redefinition .
+  methods CREDIT_REQUESTSE_CREATE_ENTITY
+    redefinition .
+  methods CREDIT_REQUESTSE_GET_ENTITY
+    redefinition .
+  methods CREDIT_REQUESTSE_GET_ENTITYSET
+    redefinition .
+  methods CURRENCYSET_GET_ENTITY
+    redefinition .
+  methods CURRENCYSET_GET_ENTITYSET
+    redefinition .
+  methods MATERIALSET_GET_ENTITY
+    redefinition .
+  methods MATERIALSET_GET_ENTITYSET
+    redefinition .
+  methods NETWORKSET_GET_ENTITY
+    redefinition .
+  methods VENDORSET_GET_ENTITY
+    redefinition .
+  methods VENDORSET_GET_ENTITYSET
+    redefinition .
+  methods WBSSET_GET_ENTITY
+    redefinition .
+private section.
+ENDCLASS.
+
+
+
+CLASS ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT IMPLEMENTATION.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->ACCSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_ACC
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD accset_get_entity.
+
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF knttp,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE knttp.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE knttp FROM eban INTO lv_bp WHERE banfn = lv_banfn.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+    SELECT SINGLE knttp, knttx INTO @DATA(ls_bp_data) FROM t163i WHERE knttp IN @lr_bp AND spras IN @lr_spras.
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-knttp = |{ <ls_bp_data>-knttp ALPHA = OUT }|.
+    <ls_entity>-knttx = |{ <ls_bp_data>-knttx ALPHA = OUT }|.
+
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->ACCSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_ACC
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method ACCSET_GET_ENTITYSET.
+
+    select * FROM T163I into CORRESPONDING FIELDS OF TABLE ET_ENTITYSET WHERE spras = sy-langu AND ( knttp = 'K' or knttp = 'N' or knttp = 'A' or knttp = 'P' ).
+
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->ARRIVALMETHODSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_ARRIVALMETHOD
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD arrivalmethodset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF zcns_arrival_code,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE zcns_arrival_code.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE ARRIVAL FROM zcns_eban_v INTO lv_bp WHERE banfn = lv_banfn.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+
+    SELECT SINGLE arrival_code, text INTO @DATA(ls_bp_data) FROM zcns_arriv_codes WHERE arrival_code IN @lr_bp AND spras IN @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-arrival_code = |{ <ls_bp_data>-arrival_code ALPHA = OUT }|.
+    <ls_entity>-text = |{ <ls_bp_data>-text ALPHA = OUT }|.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->ARRIVALMETHODSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_ARRIVALMETHOD
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method ARRIVALMETHODSET_GET_ENTITYSET.
+
+    select * FROM ZCNS_ARRIV_CODES into CORRESPONDING FIELDS OF TABLE ET_ENTITYSET WHERE spras = sy-langu.
+
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->ASSETSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_ASSET
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD assetset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF anln1,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE anln1.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE anln1 FROM zcns_eban_v INTO lv_bp WHERE banfn = lv_banfn.
+          IF sy-subrc IS NOT INITIAL OR lv_bp IS INITIAL .
+            RETURN.
+          ENDIF.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+
+    SELECT SINGLE anln1, anlhtxt INTO @DATA(ls_bp_data) FROM anlh WHERE anln1 IN @lr_bp. " AND spras IN @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-anln1 = |{ <ls_bp_data>-anln1 ALPHA = OUT }|.
+    <ls_entity>-anlhtxt = |{ <ls_bp_data>-anlhtxt ALPHA = OUT }|.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->COSTCENTERSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_COSTCENTER
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD costcenterset_get_entity.
+
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF kostl,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE kostl.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE kostl FROM zcns_eban_v INTO lv_bp WHERE banfn = lv_banfn.
+          IF sy-subrc IS NOT INITIAL OR lv_bp IS INITIAL .
+            RETURN.
+          ENDIF.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+
+    SELECT SINGLE kostl, ktext, ltext INTO @DATA(ls_bp_data) FROM cskt WHERE kostl IN @lr_bp AND spras IN @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-kostl = |{ <ls_bp_data>-kostl ALPHA = OUT }|.
+    <ls_entity>-ktext = |{ <ls_bp_data>-ktext ALPHA = OUT }|.
+    <ls_entity>-ltext = |{ <ls_bp_data>-ltext ALPHA = OUT }|.
+    <ls_entity>-datbi = '99991231'.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->COSTCENTERSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_COSTCENTER
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD costcenterset_get_entityset.
+
+    SELECT * FROM cskt INTO CORRESPONDING FIELDS OF TABLE et_entityset WHERE spras = sy-langu.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->CREDIT_REQUESTSE_CREATE_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY_C(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IO_DATA_PROVIDER               TYPE REF TO /IWBEP/IF_MGW_ENTRY_PROVIDER(optional)
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_EBAN
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD credit_requestse_create_entity.
+
+    DATA ls_entry TYPE zcl_zgw_cns_credit_req_mpc=>ts_eban.
+
+    io_data_provider->read_entry_data(
+      IMPORTING
+        es_data                      = ls_entry
+    ).
+*      CATCH /iwbep/cx_mgw_tech_exception.    "
+
+
+
+    DATA lt_eban_v TYPE TABLE OF zmm_eban.
+    DATA ls_eban_v TYPE zmm_eban.
+
+    MOVE-CORRESPONDING ls_entry TO ls_eban_v.
+*
+*    SELECT * FROM ZMM_EBAN INTO TABLE lt_eban_v .
+*
+*    LOOP AT lt_eban_v INTO ls_eban_v.
+*
+*    ENDLOOP.
+*
+*    ls_eban_v-banfn = ls_eban_v-banfn + 1.
+*
+*    SELECT SINGLE banfn FROM eban INTO ls_eban_v-banfn WHERE banfn > ls_eban_v-banfn.
+*
+*    call FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+*      EXPORTING
+*        input  = ls_eban_v-banfn    " C field
+*      IMPORTING
+*        output = ls_eban_v-banfn    " Internal display of INPUT, any category
+*      .
+
+    ls_eban_v-banfn = '0010003245'.
+    ls_eban_v-bnfpo = '00010'.
+    INSERT zmm_eban FROM ls_eban_v.
+
+    COMMIT WORK.
+
+    er_entity = ls_entry.
+
+    er_entity-banfn = ls_eban_v-banfn.
+    er_entity-bnfpo = '00010'.
+
+** CATCH /iwbep/cx_mgw_busi_exception .
+** CATCH /iwbep/cx_mgw_tech_exception .
+**ENDTRY.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->CREDIT_REQUESTSE_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_EBAN
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  method CREDIT_REQUESTSE_GET_ENTITY.
+
+    DATA lt_eban TYPE TABLE OF zcns_eban_v.
+
+    SELECT * from zcns_eban_v INTO TABLE lt_eban.
+
+    FIELD-SYMBOLS:
+      <fs_key> TYPE /iwbep/s_mgw_name_value_pair.
+    DATA:
+      lv_banfn TYPE banfn,
+      lv_bnfpo TYPE bnfpo.
+
+    READ TABLE it_key_tab ASSIGNING <fs_key> WITH KEY name = 'Banfn'.
+    IF sy-subrc IS INITIAL.
+      lv_banfn = <fs_key>-value.
+    ENDIF.
+
+    call FUNCTION 'CONVERSION_EXIT_ALPHA_INPUT'
+      EXPORTING
+        input  = lv_banfn    " C field
+      IMPORTING
+        output = lv_banfn.    " Internal display of INPUT, any category
+
+    READ TABLE lt_eban ASSIGNING FIELD-SYMBOL(<Fs_eban>) WITH KEY banfn = lv_banfn.
+    IF sy-subrc IS INITIAL.
+      MOVE-CORRESPONDING <fs_eban> to er_entity.
+
+      er_entity-buyer = 'buyer'.
+      er_entity-phone_b = 'buyer phone'.
+      er_entity-email_b = 'buyer email'.
+    ENDIF.
+
+    er_entity-address_v = 'Address'.
+
+  endmethod.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->CREDIT_REQUESTSE_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_EBAN
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD credit_requestse_get_entityset.
+
+    DATA lt_eban TYPE TABLE OF zcns_eban_v.
+
+    SELECT * FROM zcns_eban_v INTO TABLE lt_eban.
+
+
+    LOOP AT lt_eban ASSIGNING FIELD-SYMBOL(<fs_eban>).
+      APPEND INITIAL LINE TO et_entityset ASSIGNING FIELD-SYMBOL(<fs_er_es>).
+
+      MOVE-CORRESPONDING <fs_eban> TO <fs_er_es>.
+
+      <fs_er_es>-buyer = 'buyer'.
+      <fs_er_es>-phone_b = 'buyer phone'.
+      <fs_er_es>-email_b = 'buyer email'.
+
+
+      <fs_er_es>-address_v = 'Address'.
+    ENDLOOP.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->CURRENCYSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_CURRENCY
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD currencyset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lr_bp    TYPE RANGE OF waers,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+
+          lv_bp    TYPE bu_partner.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'WAERS'.
+          lv_bp   = |{ <ls_key_tab>-value ALPHA = IN }|.
+      ENDCASE.
+    ENDLOOP.
+
+    SELECT SINGLE waers, spras INTO @DATA(ls_bp_data) FROM tcurt WHERE waers IN @lr_bp AND spras = @sy-langu.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-waers = |{ <ls_bp_data>-waers ALPHA = OUT }|.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->CURRENCYSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_CURRENCY
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD currencyset_get_entityset.
+
+    SELECT * FROM tcurt INTO CORRESPONDING FIELDS OF TABLE et_entityset WHERE spras = sy-langu.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->MATERIALSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_MATERIAL
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD materialset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF matnr,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE matnr.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE matnr FROM eban INTO lv_bp WHERE banfn = lv_banfn.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+    SELECT SINGLE matnr, maktx INTO @DATA(ls_bp_data) FROM makt WHERE matnr IN @lr_bp AND maktx IN @lr_sort1 AND spras in @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-matnr = |{ <ls_bp_data>-matnr ALPHA = OUT }|.
+    <ls_entity>-maktx = <ls_bp_data>-maktx.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->MATERIALSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_MATERIAL
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD materialset_get_entityset.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lr_bp           TYPE RANGE OF matnr,
+          lr_sort1        TYPE RANGE OF maktx,
+          lx_operation_or TYPE flag_x.
+
+    lt_filters = io_tech_request_context->get_filter( )->get_filter_select_options( ).
+    IF lt_filters IS INITIAL AND iv_filter_string IS NOT INITIAL.
+      lt_filters = me->parse_condition( iv_filter_string ).
+      lx_operation_or = abap_true.
+    ENDIF.
+
+    LOOP AT lt_filters ASSIGNING FIELD-SYMBOL(<ls_filter>).
+      LOOP AT <ls_filter>-select_options ASSIGNING FIELD-SYMBOL(<ls_so>).
+        CASE <ls_filter>-property.
+          WHEN 'MATNR'.
+            APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_bp>).
+            <ls_bp>-sign = <ls_so>-sign.
+            <ls_bp>-option = <ls_so>-option.
+
+            <ls_bp>-low    = |{ <ls_so>-low ALPHA = IN }|.
+
+          WHEN 'MAKTX'.
+            APPEND INITIAL LINE TO lr_sort1 ASSIGNING FIELD-SYMBOL(<ls_sort1>).
+            <ls_sort1>-sign = <ls_so>-sign.
+            <ls_sort1>-option = 'CP'.
+            <ls_sort1>-low    = '*' && <ls_so>-low && '*'.
+            TRANSLATE <ls_sort1>-low TO UPPER CASE.
+
+            APPEND INITIAL LINE TO lr_sort1 ASSIGNING <ls_sort1>.
+            <ls_sort1>-sign = <ls_so>-sign.
+            <ls_sort1>-option = 'CP'.
+            <ls_sort1>-low    =  <ls_so>-low && '*'.
+            TRANSLATE <ls_sort1>-low TO UPPER CASE.
+
+        ENDCASE.
+      ENDLOOP.
+    ENDLOOP.
+
+    IF lx_operation_or = abap_true.
+      IF lr_bp IS NOT INITIAL AND lr_sort1 IS NOT INITIAL.
+
+        SELECT matnr, maktx UP TO @is_paging-top ROWS INTO TABLE @DATA(lt_bp_data) FROM makt WHERE matnr IN @lr_bp OR maktx IN @lr_sort1 AND spras = @sy-langu.
+
+      ELSEIF lr_bp IS INITIAL AND lr_sort1 IS NOT INITIAL.
+
+        SELECT matnr, maktx UP TO @is_paging-top ROWS INTO TABLE @lt_bp_data FROM makt WHERE maktx IN @lr_sort1 AND spras = @sy-langu.
+
+      ELSEIF lr_bp IS NOT INITIAL AND lr_sort1 IS INITIAL.
+
+        SELECT matnr, maktx UP TO @is_paging-top ROWS INTO TABLE @lt_bp_data FROM makt WHERE matnr IN @lr_bp AND spras = @sy-langu.
+
+      ENDIF.
+    ELSE.
+      SELECT matnr, maktx UP TO @is_paging-top ROWS INTO TABLE @lt_bp_data FROM makt WHERE  matnr IN @lr_bp AND maktx IN @lr_sort1 AND spras = @sy-langu.
+    ENDIF.
+
+    IF sy-subrc = 0.
+      LOOP AT lt_bp_data ASSIGNING FIELD-SYMBOL(<ls_bp_data>).
+        APPEND INITIAL LINE TO  et_entityset ASSIGNING FIELD-SYMBOL(<ls_entity>).
+        <ls_entity>-matnr = |{ <ls_bp_data>-matnr ALPHA = OUT }|.
+        <ls_entity>-maktx = <ls_bp_data>-maktx.
+      ENDLOOP.
+
+      IF iv_search_string IS NOT INITIAL AND strlen( iv_search_string ) > 2.
+        DATA(lt_entityset) = et_entityset[].
+        CLEAR et_entityset[].
+
+        DATA lv_strlen TYPE i.
+
+        lv_strlen = strlen( iv_search_string ) - 2.
+
+        DATA lv_search TYPE string.
+        DATA lv_search_text TYPE string.
+        lv_search = |*{ iv_search_string+1(lv_strlen) }*|.
+        lv_search_text = lv_search.
+        TRANSLATE lv_search TO UPPER CASE.
+        LOOP AT lt_entityset ASSIGNING FIELD-SYMBOL(<fs_entity>)
+          WHERE matnr CP lv_search OR maktx CP lv_search_text.
+
+          APPEND <fs_entity> TO et_entityset.
+        ENDLOOP.
+      ENDIF.
+    ENDIF.
+
+
+
+    DATA(lv_skip) = io_tech_request_context->get_skip( ).
+    DATA(lv_top) = io_tech_request_context->get_top( ).
+
+    /iwbep/cl_mgw_data_util=>paging(
+      EXPORTING
+        is_paging = VALUE #( top = lv_top skip = lv_skip )
+      CHANGING
+        ct_data   = et_entityset ).
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->NETWORKSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_NETWORK
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD networkset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF aufnr,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE aufnr.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE aufnr FROM zcns_eban_v INTO lv_bp WHERE banfn = lv_banfn.
+          IF sy-subrc IS NOT INITIAL OR lv_bp IS INITIAL .
+            RETURN.
+          ENDIF.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+
+    SELECT SINGLE aufnr, ktext INTO @DATA(ls_bp_data) FROM aufk WHERE aufnr IN @lr_bp. " AND spras IN @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-aufnr = |{ <ls_bp_data>-aufnr ALPHA = OUT }|.
+    <ls_entity>-ktext = |{ <ls_bp_data>-ktext ALPHA = OUT }|.
+
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->PARSE_CONDITION
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [<-()] RT_FILTERS                     TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD parse_condition.
+    DATA: lv_filter_string TYPE string,
+          ls_filter        TYPE LINE OF /iwbep/t_mgw_select_option,
+          lr_partner       TYPE /iwbep/t_cod_select_options,
+          ls_partner       TYPE /iwbep/s_cod_select_option,
+          lr_searchterm    TYPE /iwbep/t_cod_select_options,
+          ls_searchterm    TYPE /iwbep/s_cod_select_option.
+
+
+    lv_filter_string = CONDENSE( iv_filter_string ).
+    REPLACE ALL OCCURRENCES OF ') or (' IN lv_filter_string WITH ') OR ('.
+    SPLIT lv_filter_string AT ') OR (' INTO TABLE DATA(lt_condition).
+    IF lt_condition IS INITIAL.
+       REPLACE ALL OCCURRENCES OF ' or ' IN lv_filter_string WITH ' OR '.
+       SPLIT lv_filter_string AT ' OR ' INTO TABLE lt_condition.
+    ENDIF.
+
+    LOOP AT lt_condition ASSIGNING FIELD-SYMBOL(<ls_condition>).
+      REPLACE ALL OCCURRENCES OF ')' IN <ls_condition> WITH ''.
+      REPLACE ALL OCCURRENCES OF '(' IN <ls_condition> WITH ''.
+      REPLACE ALL OCCURRENCES OF '''' IN <ls_condition> WITH ''.
+    ENDLOOP.
+
+*    lv_filter_string = iv_filter_string.
+*
+*    REPLACE ALL OCCURRENCES OF ')' IN lv_filter_string WITH ''.
+*    REPLACE ALL OCCURRENCES OF '(' IN lv_filter_string WITH ''.
+*    REPLACE ALL OCCURRENCES OF '''' IN lv_filter_string WITH ''.
+*    REPLACE ALL OCCURRENCES OF 'or' IN lv_filter_string WITH 'OR'.
+*
+*    SPLIT lv_filter_string AT 'OR' INTO TABLE DATA(lt_condition).
+
+    LOOP AT lt_condition ASSIGNING <ls_condition>.
+      SHIFT <ls_condition> LEFT DELETING LEADING space.
+      IF NOT ( <ls_condition> CS 'substringof').
+        SPLIT <ls_condition> AT space INTO DATA(lv_field) DATA(lv_operation) DATA(lv_value).
+        TRANSLATE lv_operation TO UPPER CASE.
+        CASE lv_field.
+          WHEN 'LIFNR'.
+            ls_partner-sign   = 'I'.
+            ls_partner-option = lv_operation.
+            ls_partner-low    = |{ lv_value ALPHA = IN }|.
+            APPEND ls_partner TO lr_partner.
+          WHEN 'NAME1'. " 'SearchTerm1'.
+            ls_searchterm-sign   = 'I'.
+            ls_searchterm-option = lv_operation.
+            ls_searchterm-low    = lv_value.
+            APPEND ls_searchterm TO lr_searchterm.
+          WHEN OTHERS.
+        ENDCASE.
+      ELSE.
+        SPLIT <ls_condition> AT ',' INTO DATA(lv_condition) lv_field.
+        SPLIT lv_condition AT   space INTO lv_operation lv_value.
+        lv_field = condense( lv_field ).
+        lv_value = condense( lv_value ).
+        CASE lv_field.
+          WHEN 'LIFNR'.
+            ls_partner-sign   = 'I'.
+            ls_partner-option = 'CP'.
+            ls_partner-low    = '*' && lv_value && '*'.
+            APPEND ls_partner TO lr_partner.
+
+            ls_partner-sign   = 'I'.
+            ls_partner-option = 'CP'.
+            ls_partner-low    =  lv_value && '*'.
+            APPEND ls_partner TO lr_partner.
+          WHEN 'NAME1'. " 'SearchTerm1'.
+            ls_searchterm-sign   = 'I'.
+            ls_searchterm-option = 'CP'.
+            ls_searchterm-low    = '*' && lv_value && '*'.
+            APPEND ls_searchterm TO lr_searchterm.
+          WHEN OTHERS.
+        ENDCASE.
+
+      ENDIF.
+    ENDLOOP.
+
+    IF lr_partner IS NOT INITIAL.
+      ls_filter-property = 'LIFNR'.
+      APPEND LINES OF lr_partner TO ls_filter-select_options.
+      APPEND ls_filter TO rt_filters.
+    ENDIF.
+
+    IF lr_searchterm IS NOT INITIAL.
+      CLEAR ls_filter.
+      ls_filter-property = 'NAME1'.
+      APPEND LINES OF lr_searchterm TO ls_filter-select_options.
+      APPEND ls_filter TO rt_filters.
+    ENDIF.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->VENDORSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_VENDOR
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD VENDORSET_GET_ENTITY.
+
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lr_bp    TYPE RANGE OF bu_partner,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lv_bp    TYPE bu_partner.
+
+
+*    lt_filters = io_tech_request_context->get_filter( )->get_filter_select_options( ).
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+*      LOOP AT <ls_filter>-select_options ASSIGNING FIELD-SYMBOL(<ls_so>).
+      CASE <ls_key_tab>-name.
+        WHEN 'LIFNR'.
+
+          lv_bp   = |{ <ls_key_tab>-value ALPHA = IN }|.
+
+      ENDCASE.
+*      ENDLOOP.
+    ENDLOOP.
+
+    SELECT SINGLE lifnr AS partner,
+           name1 AS name1_text
+      INTO @DATA(ls_bp_data)
+      FROM lfa1
+      WHERE  lifnr IN @lr_bp
+        AND  name1   IN @lr_sort1.
+
+
+*    IF sy-subrc = 0.
+*      LOOP AT lt_bp_data ASSIGNING FIELD-SYMBOL(<ls_bp_data>).
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-lifnr = |{ <ls_bp_data>-partner ALPHA = OUT }|.
+*        <ls_entity>-academictitle = <ls_bp_data>-title_aca1.
+*        <ls_entity>-authorizationgroup = <ls_bp_data>-augrp.
+*        <ls_entity>-businesspartnercategory = <ls_bp_data>-type.
+    <ls_entity>-name1 = <ls_bp_data>-name1_text.
+*        <ls_entity>-businesspartnergrouping = <ls_bp_data>-bu_group.
+*        <ls_entity>-businesspartnername = <ls_bp_data>-name_first && space && <ls_bp_data>-name_last.
+*        <ls_entity>-businesspartneruuid = <ls_bp_data>-partner_guid.
+*        <ls_entity>-correspondencelanguage = <ls_bp_data>-langu_corr.
+*        <ls_entity>-createdbyuser = <ls_bp_data>-crusr.
+*        <ls_entity>-creationdate = <ls_bp_data>-crdat && '000000'.
+*        <ls_entity>-creationtime = <ls_bp_data>-crtim.
+*        <ls_entity>-firstname = <ls_bp_data>-name_first.
+*        <ls_entity>-formofaddress = <ls_bp_data>-name_last.
+*        <ls_entity>-industry = <ls_bp_data>-ind_sector.
+*        <ls_entity>-internationallocationnumber1 = <ls_bp_data>-location_1.
+*        <ls_entity>-internationallocationnumber2 = <ls_bp_data>-location_2.
+*        <ls_entity>-isfemale = <ls_bp_data>-xsexf.
+*        <ls_entity>-ismale = <ls_bp_data>-xsexm.
+*        <ls_entity>-isnaturalperson = <ls_bp_data>-napr.
+*        <ls_entity>-issexunknown = <ls_bp_data>-xsexu.
+**        <ls_entity>-GenderCodeName  = <ls_bp_data>-.
+*        <ls_entity>-language = <ls_bp_data>-bu_langu.
+*        <ls_entity>-lastchangedate = <ls_bp_data>-chdat && '000000'.
+*        <ls_entity>-lastchangetime = <ls_bp_data>-chtim.
+*        <ls_entity>-lastchangedbyuser = <ls_bp_data>-chusr.
+*        <ls_entity>-lastname = <ls_bp_data>-name_last.
+*        <ls_entity>-legalform = <ls_bp_data>-legal_enty.
+*        <ls_entity>-organizationbpname1 = <ls_bp_data>-name_org1.
+*        <ls_entity>-organizationbpname2 = <ls_bp_data>-name_org2.
+*        <ls_entity>-organizationbpname3 = <ls_bp_data>-name_org3.
+*        <ls_entity>-organizationbpname4 = <ls_bp_data>-name_org3.
+*        <ls_entity>-organizationfoundationdate = <ls_bp_data>-found_dat && '000000'.
+*        <ls_entity>-organizationliquidationdate = <ls_bp_data>-liquid_dat && '000000'.
+*        <ls_entity>-searchterm1 = <ls_bp_data>-bu_sort1.
+*        <ls_entity>-searchterm2 = <ls_bp_data>-bu_sort2.
+**        <ls_entity>-AdditionalLastName = <ls_bp_data>-.
+*        <ls_entity>-birthdate = <ls_bp_data>-birthdt && '000000'.
+**        <ls_entity>-BusinessPartnerBirthDateStatus = <ls_bp_data>-.
+*        <ls_entity>-businesspartnerbirthplacename = <ls_bp_data>-birthpl.
+*        <ls_entity>-businesspartnerdeathdate = <ls_bp_data>-deathdt && '000000'.
+*        <ls_entity>-businesspartnerisblocked = <ls_bp_data>-xblck.
+*        <ls_entity>-businesspartnertype = <ls_bp_data>-bpkind.
+*        <ls_entity>-groupbusinesspartnername1 = <ls_bp_data>-name_grp1.
+*        <ls_entity>-groupbusinesspartnername2 = <ls_bp_data>-name_grp2.
+**        <ls_entity>-IndependentAddressID = <ls_bp_data>-.
+*        <ls_entity>-internationallocationnumber3 = <ls_bp_data>-location_3.
+*        <ls_entity>-middlename = <ls_bp_data>-namemiddle.
+*        <ls_entity>-namecountry = <ls_bp_data>-namcountry.
+*        <ls_entity>-nameformat = <ls_bp_data>-nameformat.
+*        <ls_entity>-personfullname = <ls_bp_data>-name1_text.
+*        <ls_entity>-personnumber = <ls_bp_data>-persnumber.
+*        <ls_entity>-ismarkedforarchiving = <ls_bp_data>-xdele.
+*        <ls_entity>-businesspartneridbyextsystem = <ls_bp_data>-bpext.
+**        <ls_entity>-TradingPartner = <ls_bp_data>-.
+*
+*
+**      ENDLOOP.
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->VENDORSET_GET_ENTITYSET
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_FILTER_SELECT_OPTIONS       TYPE        /IWBEP/T_MGW_SELECT_OPTION
+* | [--->] IS_PAGING                      TYPE        /IWBEP/S_MGW_PAGING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [--->] IT_ORDER                       TYPE        /IWBEP/T_MGW_SORTING_ORDER
+* | [--->] IV_FILTER_STRING               TYPE        STRING
+* | [--->] IV_SEARCH_STRING               TYPE        STRING
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITYSET(optional)
+* | [<---] ET_ENTITYSET                   TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TT_VENDOR
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_CONTEXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD vendorset_get_entityset.
+
+*    select * FROM lfa1 into CORRESPONDING FIELDS OF TABLE ET_ENTITYSET.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lr_bp           TYPE RANGE OF bu_partner,
+          lr_sort1        TYPE RANGE OF mcdk1, "bu_sort1,
+          lr_sort2        TYPE RANGE OF mcdk2, "bu_sort2,
+          lx_operation_or TYPE flag_x.
+
+    lt_filters = io_tech_request_context->get_filter( )->get_filter_select_options( ).
+    IF lt_filters IS INITIAL AND iv_filter_string IS NOT INITIAL.
+      lt_filters = me->parse_condition( iv_filter_string ).
+      lx_operation_or = abap_true.
+    ENDIF.
+
+    LOOP AT lt_filters ASSIGNING FIELD-SYMBOL(<ls_filter>).
+      LOOP AT <ls_filter>-select_options ASSIGNING FIELD-SYMBOL(<ls_so>).
+        CASE <ls_filter>-property.
+          WHEN 'LIFNR'.
+            APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_bp>).
+            <ls_bp>-sign = <ls_so>-sign.
+            <ls_bp>-option = <ls_so>-option.
+
+            <ls_bp>-low    = |{ <ls_so>-low ALPHA = IN }|.
+
+          WHEN 'NAME1'.
+            APPEND INITIAL LINE TO lr_sort1 ASSIGNING FIELD-SYMBOL(<ls_sort1>).
+            <ls_sort1>-sign = <ls_so>-sign.
+            <ls_sort1>-option = 'CP'.
+            <ls_sort1>-low    = '*' && <ls_so>-low && '*'.
+            TRANSLATE <ls_sort1>-low TO UPPER CASE.
+
+            APPEND INITIAL LINE TO lr_sort1 ASSIGNING <ls_sort1>.
+            <ls_sort1>-sign = <ls_so>-sign.
+            <ls_sort1>-option = 'CP'.
+            <ls_sort1>-low    =  <ls_so>-low && '*'.
+            TRANSLATE <ls_sort1>-low TO UPPER CASE.
+
+          WHEN 'NAME2'.
+            APPEND INITIAL LINE TO lr_sort2 ASSIGNING FIELD-SYMBOL(<ls_sort2>).
+            <ls_sort2>-sign = <ls_so>-sign.
+            <ls_sort2>-option = 'CP'.
+            <ls_sort2>-low    = '*' && <ls_so>-low && '*'.
+            TRANSLATE <ls_sort2>-low TO UPPER CASE.
+        ENDCASE.
+      ENDLOOP.
+    ENDLOOP.
+
+    IF lx_operation_or = abap_true.
+      IF lr_bp IS NOT INITIAL AND lr_sort1 IS NOT INITIAL.
+        SELECT lifnr AS partner,
+               name1 AS name1_text
+
+                UP TO @is_paging-top ROWS
+          INTO TABLE @DATA(lt_bp_data)
+          FROM lfa1
+          WHERE  lifnr IN @lr_bp
+            OR   mcod1   IN @lr_sort1.
+      ELSEIF lr_bp IS INITIAL AND lr_sort1 IS NOT INITIAL.
+        SELECT lifnr AS partner,
+              name1 AS name1_text
+
+               UP TO @is_paging-top ROWS
+         INTO TABLE @lt_bp_data
+         FROM lfa1
+         WHERE  mcod1   IN @lr_sort1.
+      ELSEIF lr_bp IS NOT INITIAL AND lr_sort1 IS INITIAL.
+        SELECT lifnr AS partner,
+               name1 AS name1_text
+
+                UP TO @is_paging-top ROWS
+          INTO TABLE @lt_bp_data
+          FROM lfa1
+          WHERE  lifnr IN @lr_bp.
+
+      ENDIF.
+    ELSE.
+      SELECT lifnr AS partner,
+             name1 AS name1_text
+
+              UP TO @is_paging-top ROWS
+        INTO TABLE @lt_bp_data
+        FROM lfa1
+        WHERE  lifnr IN @lr_bp
+          AND  mcod1   IN @lr_sort1.
+    ENDIF.
+    IF sy-subrc = 0.
+      LOOP AT lt_bp_data ASSIGNING FIELD-SYMBOL(<ls_bp_data>).
+        APPEND INITIAL LINE TO  et_entityset ASSIGNING FIELD-SYMBOL(<ls_entity>).
+        <ls_entity>-lifnr = |{ <ls_bp_data>-partner ALPHA = OUT }|.
+        <ls_entity>-name1 = <ls_bp_data>-name1_text.
+      ENDLOOP.
+
+      IF iv_search_string IS NOT INITIAL AND strlen( iv_search_string ) > 2.
+        DATA(lt_entityset) = et_entityset[].
+        CLEAR et_entityset[].
+
+
+        DATA lv_strlen TYPE i.
+
+        lv_strlen = strlen( iv_search_string ) - 2.
+
+        DATA lv_search TYPE string.
+        DATA lv_search_text TYPE string.
+        lv_search = |*{ iv_search_string+1(lv_strlen) }*|.
+        lv_search_text = lv_search.
+        TRANSLATE lv_search TO UPPER CASE.
+        LOOP AT lt_entityset ASSIGNING FIELD-SYMBOL(<fs_entity>)
+          WHERE lifnr CP lv_search OR name1 CP lv_search_text OR
+                name1 CP lv_search_text.
+
+          APPEND <fs_entity> TO et_entityset.
+        ENDLOOP.
+      ENDIF.
+    ENDIF.
+
+
+
+
+    DATA(lv_skip) = io_tech_request_context->get_skip( ).
+    DATA(lv_top) = io_tech_request_context->get_top( ).
+
+    /iwbep/cl_mgw_data_util=>paging(
+      EXPORTING
+        is_paging = VALUE #( top = lv_top skip = lv_skip )
+      CHANGING
+        ct_data   = et_entityset ).
+  ENDMETHOD.
+
+
+* <SIGNATURE>---------------------------------------------------------------------------------------+
+* | Instance Protected Method ZCL_ZGW_CNS_CREDIT_REQ_DPC_EXT->WBSSET_GET_ENTITY
+* +-------------------------------------------------------------------------------------------------+
+* | [--->] IV_ENTITY_NAME                 TYPE        STRING
+* | [--->] IV_ENTITY_SET_NAME             TYPE        STRING
+* | [--->] IV_SOURCE_NAME                 TYPE        STRING
+* | [--->] IT_KEY_TAB                     TYPE        /IWBEP/T_MGW_NAME_VALUE_PAIR
+* | [--->] IO_REQUEST_OBJECT              TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IO_TECH_REQUEST_CONTEXT        TYPE REF TO /IWBEP/IF_MGW_REQ_ENTITY(optional)
+* | [--->] IT_NAVIGATION_PATH             TYPE        /IWBEP/T_MGW_NAVIGATION_PATH
+* | [<---] ER_ENTITY                      TYPE        ZCL_ZGW_CNS_CREDIT_REQ_MPC=>TS_WBS
+* | [<---] ES_RESPONSE_CONTEXT            TYPE        /IWBEP/IF_MGW_APPL_SRV_RUNTIME=>TY_S_MGW_RESPONSE_ENTITY_CNTXT
+* | [!CX!] /IWBEP/CX_MGW_BUSI_EXCEPTION
+* | [!CX!] /IWBEP/CX_MGW_TECH_EXCEPTION
+* +--------------------------------------------------------------------------------------</SIGNATURE>
+  METHOD wbsset_get_entity.
+
+    DATA: lt_filters TYPE    /iwbep/t_mgw_select_option.
+    DATA: lv_banfn TYPE eban-banfn,
+          lr_bp    TYPE RANGE OF ps_posnr,
+          lr_sort1 TYPE RANGE OF bu_sort1,
+          lr_sort2 TYPE RANGE OF bu_sort2,
+          lr_spras TYPE RANGE OF spras,
+          lv_bp    TYPE ps_posnr.
+
+    LOOP AT it_key_tab ASSIGNING FIELD-SYMBOL(<ls_key_tab>).
+      CASE <ls_key_tab>-name.
+        WHEN 'Banfn'.
+          lv_banfn = |{ <ls_key_tab>-value ALPHA = IN }|.
+          SELECT SINGLE ps_psp_pnr FROM zcns_eban_v INTO lv_bp WHERE banfn = lv_banfn.
+          IF sy-subrc IS NOT INITIAL OR lv_bp IS INITIAL .
+            RETURN.
+          ENDIF.
+          APPEND INITIAL LINE TO lr_bp ASSIGNING FIELD-SYMBOL(<ls_ent>).
+          <ls_ent>-low = lv_bp.
+          <ls_ent>-sign = 'I'.
+          <ls_ent>-option = 'EQ'.
+      ENDCASE.
+    ENDLOOP.
+
+
+    IF lr_spras IS INITIAL.
+      lr_spras = VALUE #( ( sign = 'I'  option = 'EQ'  low = sy-langu ) ).
+    ENDIF.
+
+
+
+    SELECT SINGLE pspnr, post1 INTO @DATA(ls_bp_data) FROM prps WHERE pspnr IN @lr_bp. " AND spras IN @lr_spras.
+
+    ASSIGN  er_entity TO FIELD-SYMBOL(<ls_entity>).
+    ASSIGN ls_bp_data TO FIELD-SYMBOL(<ls_bp_data>).
+    <ls_entity>-pspnr = |{ <ls_bp_data>-pspnr ALPHA = OUT }|.
+    <ls_entity>-post1 = |{ <ls_bp_data>-post1 ALPHA = OUT }|.
+
+  ENDMETHOD.
+ENDCLASS.
